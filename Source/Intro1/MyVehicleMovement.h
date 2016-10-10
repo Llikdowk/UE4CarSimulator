@@ -27,29 +27,32 @@ public:
     void ApplyMovement(float DeltaTime);
 
     /* DEPRECATED */
-    UPROPERTY(EditAnywhere)
-    float Throttle = 10.0f;
-    UPROPERTY(EditAnywhere)
-    float Friction = 5.0f;
-    UPROPERTY(EditAnywhere)
     float SteeringPower = 2.0f;
     /**/
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, DisplayName="Mass (kg)")
     float Mass = 1.0f;
 
-    // forces
-    UPROPERTY(EditAnywhere)
+    // forces (N/m)
+    UPROPERTY(EditAnywhere, DisplayName="Aerodynamic Drag (N/m)")
     float AerodynamicDrag;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, DisplayName="Rolling Resistance (N/m)")
     float RollingResistance;
     UPROPERTY(EditAnywhere)
-    float Traction = 1.0;
-    UPROPERTY(EditAnywhere)
+    UCurveFloat* EngineTorqueCurve;
+    UPROPERTY(EditAnywhere, DisplayName="Brake (N/m)")
     float Brake = 1.0;
+    UPROPERTY(EditAnywhere, DisplayName = "Wheel Radius (m)")
+    float WheelRadius = 0.25f;
 
     UPROPERTY(EditAnywhere)
     float CorneringStiffness = 1.0f;
+
+    // Velocity: m/s
+    
+
+    //UPROPERTY(VisibleAnywhere)
+    //FVector Velocity = FVector::ZeroVector;
 
 private:
     float InputThrottle;
@@ -57,7 +60,8 @@ private:
     void CalcThrottle(float DeltaTime);
     void CalcSteering(float DeltaTime);
 
-    FVector Velocity = FVector::ZeroVector;
-    FVector Acceleration = FVector::ZeroVector; 
+    const float m_to_cm = 100.0f;
 
+    FVector Acceleration = FVector::ZeroVector; 
+    float Rpm = 0.0f;
 };

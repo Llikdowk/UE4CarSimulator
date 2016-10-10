@@ -25,9 +25,10 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime) {
     FVector ForwardV = PawnOwner->GetActorForwardVector();
 
     FVector TotalForces = FVector::ZeroVector;
-    TotalForces += -AerodynamicDrag * Velocity * Velocity.Size();
+    TotalForces += -AerodynamicDrag * Velocity * Velocity.Size(); // N/m * m/s -> N/s
     TotalForces += -RollingResistance * Velocity;
     if (InputThrottle > 0) {
+        float Traction = EngineTorqueCurve->GetFloatValue(Rpm);        
         TotalForces += InputThrottle * Traction * ForwardV;
     }
     else {
@@ -35,19 +36,17 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime) {
     }
 
     
-    Acceleration = TotalForces / Mass;
-    Velocity = Velocity + Acceleration * DeltaTime;
+    Acceleration = TotalForces*DeltaTime / Mass; // m/s^2
+    Velocity = Velocity + Acceleration * DeltaTime; // m/s
+    Rpm = Velocity.Size() / (WheelRadius * 2 * 3.141592f) * 60.0f;
     FVector Position = PawnOwner->GetActorLocation();
-    FVector NewPosition = Position + Velocity * DeltaTime;
+    FVector NewPosition = Position + Velocity*m_to_cm * DeltaTime;
     PawnOwner->SetActorLocation(NewPosition);
     
     DrawDebugLine(GetWorld(), PawnOwner->GetActorLocation(), PawnOwner->GetActorLocation() + ForwardV*1000.0f, FColor::Cyan, false, -1.0f, (uint8)'\000', 5.0f);
     DrawDebugLine(GetWorld(), PawnOwner->GetActorLocation(), PawnOwner->GetActorLocation() + Velocity*100.0f, FColor::Red, false, -1.0f, (uint8)'\000', 10.0f);
-    //AddInputVector(ForwardV*InputThrottle*DeltaTime*Throttle);
-    //int Sign = FMath::Sign(PawnOwner->GetTransform().InverseTransformVector(GetPendingInputVector()).X);
-    //AddInputVector(-GetPendingInputVector().SafeNormal()*DeltaTime*Friction);
-    UE_LOG(LogTemp, Warning, TEXT("v= %s km/h"), *(FString::SanitizeFloat(Velocity.Size() * 0.01f * 3.6f)));
 
+    UE_LOG(LogTemp, Warning, TEXT("rpm=%s"), *(FString::SanitizeFloat(Rpm)));
 }
 
 void UMyVehicleMovement::CalcSteering(float DeltaTime) {
