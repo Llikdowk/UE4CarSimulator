@@ -25,28 +25,45 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime) {
     FVector ForwardV = PawnOwner->GetActorForwardVector();
 
     FVector TotalForces = FVector::ZeroVector;
-    TotalForces += -AerodynamicDrag * Velocity * Velocity.Size(); // N/m * m/s -> N/s
-    TotalForces += -RollingResistance * Velocity;
+    TotalForces += -AerodynamicDrag * Velocity * Velocity.Size(); // N
+    TotalForces += -RollingResistance * Velocity.SafeNormal();
     if (InputThrottle > 0) {
-        float Traction = EngineTorqueCurve->GetFloatValue(Rpm);        
-        TotalForces += InputThrottle * Traction * ForwardV;
+        TorqueWheels = TorqueEngine * GearBox[CurrentGear] * FinalDriveRatio;
+        float Traction = TorqueWheels / WheelRadius;
+        TotalForces += InputThrottle * ForwardV * Traction;
     }
     else {
         TotalForces += InputThrottle * Brake * ForwardV;
     }
 
-    
-    Acceleration = TotalForces*DeltaTime / Mass; // m/s^2
+    Acceleration = TotalForces / Mass; // m/s^2
     Velocity = Velocity + Acceleration * DeltaTime; // m/s
-    Rpm = Velocity.Size() / (WheelRadius * 2 * 3.141592f) * 60.0f;
+
+    WheelsRpm = Velocity.Size() / WheelRadius * radps_to_rpm;
+    TorqueEngine = EngineTorqueCurve->GetFloatValue(EngineRpm);
+    EngineRpm = GearBox[CurrentGear] * FinalDriveRatio * Velocity.Size() / WheelRadius * radps_to_rpm;
+
+    UE_LOG(LogTemp, Warning, TEXT("WheelsRPM=%s"), *(FString::SanitizeFloat(WheelsRpm)));
+    UE_LOG(LogTemp, Warning, TEXT("EngineRPM=%s"), *(FString::SanitizeFloat(EngineRpm)));
+    UE_LOG(LogTemp, Warning, TEXT("GEAR=%s"), *(FString::SanitizeFloat(CurrentGear)));
+
     FVector Position = PawnOwner->GetActorLocation();
     FVector NewPosition = Position + Velocity*m_to_cm * DeltaTime;
     PawnOwner->SetActorLocation(NewPosition);
     
     DrawDebugLine(GetWorld(), PawnOwner->GetActorLocation(), PawnOwner->GetActorLocation() + ForwardV*1000.0f, FColor::Cyan, false, -1.0f, (uint8)'\000', 5.0f);
     DrawDebugLine(GetWorld(), PawnOwner->GetActorLocation(), PawnOwner->GetActorLocation() + Velocity*100.0f, FColor::Red, false, -1.0f, (uint8)'\000', 10.0f);
+}
 
-    UE_LOG(LogTemp, Warning, TEXT("rpm=%s"), *(FString::SanitizeFloat(Rpm)));
+void UMyVehicleMovement::UpGear() {
+    if (CurrentGear == GearBox.Num() - 1) return;
+    ++CurrentGear;
+}
+
+void UMyVehicleMovement::DownGear() {
+    if (CurrentGear == 0) return;
+    --CurrentGear;
+    EngineRpm = FMath::Min(MaxEngineRpm, EngineRpm); // fixme! velocity should drop
 }
 
 void UMyVehicleMovement::CalcSteering(float DeltaTime) {
@@ -58,4 +75,10 @@ void UMyVehicleMovement::ApplyMovement(float DeltaTime) {
     CalcSteering(DeltaTime);
     CalcThrottle(DeltaTime);
     MoveUpdatedComponent(GetPendingInputVector(), PawnOwner->GetActorRotation(), false);
+}
+
+// info: https://github.com/EpicGames/UnrealEngine/blob/c9f4efe690de8b3b72a11223865c623ca0ee7086/Engine/Source/Runtime/Engine/Private/Actor.cpp#L1797
+void UMyVehicleMovement::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) {
+	UFont* RenderFont = GEngine->GetSmallFont();
+    Canvas->DrawText(RenderFont, FString::Printf(TEXT("Gear: %s"), *(FString::FromInt(CurrentGear))), 4.0f, YPos);
 }

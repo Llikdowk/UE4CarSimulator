@@ -37,3 +37,7 @@ void APhysicsWheeledVehicle::SetupPlayerInputComponent(class UInputComponent* In
 	Super::SetupPlayerInputComponent(InputComponent);
 }
 
+void APhysicsWheeledVehicle::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) {
+    Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+    VehicleMovement->DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+}

@@ -28,4 +28,6 @@ public:
     USkeletalMeshComponent* Mesh;
     UPROPERTY(EditAnywhere)
     UMyVehicleMovement* VehicleMovement;
+
+    virtual void APhysicsWheeledVehicle::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
 };
