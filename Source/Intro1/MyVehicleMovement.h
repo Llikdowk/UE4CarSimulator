@@ -8,11 +8,23 @@
 /**
  * 
  */
+
+USTRUCT()
+struct FGearInfo {
+    GENERATED_USTRUCT_BODY();
+
+    UPROPERTY(EditAnywhere)
+    float Ratio;
+    UPROPERTY(EditAnywhere)
+    float DecraseAt;
+    UPROPERTY(EditAnywhere)
+    float IncreaseAt;
+};
+
 UCLASS()
 class INTRO1_API UMyVehicleMovement : public UPawnMovementComponent
 {
 	GENERATED_BODY()
-
 
 public:
  
@@ -23,9 +35,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="PhysicsVehicle|Movement")
     void SetSteeringInput(float InputSteering);
     UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Movement")
-    void UpGear();
+    void IncreaseGear();
     UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Movement")
-    void DownGear();
+    void DecreaseGear();
 
     UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Info")
     float GetRpm() { return EngineRpm; }
@@ -34,6 +46,7 @@ public:
 
     virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void ApplyMovement(float DeltaTime);
+    void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos);
 
     /* DEPRECATED */
     float SteeringPower = 2.0f;
@@ -55,25 +68,27 @@ public:
 
     UPROPERTY(EditAnywhere)
     UCurveFloat* EngineTorqueCurve;
+    //FRuntimeFloatCurve EngineTorqueCurve;
 
     UPROPERTY(EditAnywhere)
     float CorneringStiffness = 1.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool AutomaticGearMode = true;
     UPROPERTY(EditAnywhere)
-    //float CurrentGearRatio = 3.82f; //temp, as if the car only had one gear
-    TArray<float> GearBox;
+    TArray<FGearInfo> GearBox;
     UPROPERTY(EditAnywhere)
     float FinalDriveRatio = 3.44f;
     UPROPERTY(EditAnywhere)
     float MaxEngineRpm = 8000;
 
-    void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos);
 
 private:
     float InputThrottle;
     float InputSteering;
     void CalcThrottle(float DeltaTime);
     void CalcSteering(float DeltaTime);
+    void AutomaticGearChange();
 
     const float m_to_cm = 100.0f;
     const float rpm_to_radps = 2.0f * PI / 60.0f;

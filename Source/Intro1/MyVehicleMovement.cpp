@@ -26,9 +26,9 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime) {
 
     FVector TotalForces = FVector::ZeroVector;
     TotalForces += -AerodynamicDrag * Velocity * Velocity.Size(); // N
-    TotalForces += -RollingResistance * Velocity.SafeNormal();
+    TotalForces += -RollingResistance * Velocity.GetSafeNormal();
     if (InputThrottle > 0) {
-        TorqueWheels = TorqueEngine * GearBox[CurrentGear] * FinalDriveRatio;
+        TorqueWheels = TorqueEngine * GearBox[CurrentGear].Ratio * FinalDriveRatio;
         float Traction = TorqueWheels / WheelRadius;
         TotalForces += InputThrottle * ForwardV * Traction;
     }
@@ -41,7 +41,7 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime) {
 
     WheelsRpm = Velocity.Size() / WheelRadius * radps_to_rpm;
     TorqueEngine = EngineTorqueCurve->GetFloatValue(EngineRpm);
-    EngineRpm = GearBox[CurrentGear] * FinalDriveRatio * Velocity.Size() / WheelRadius * radps_to_rpm;
+    EngineRpm = GearBox[CurrentGear].Ratio * FinalDriveRatio * Velocity.Size() / WheelRadius * radps_to_rpm;
 
     UE_LOG(LogTemp, Warning, TEXT("WheelsRPM=%s"), *(FString::SanitizeFloat(WheelsRpm)));
     UE_LOG(LogTemp, Warning, TEXT("EngineRPM=%s"), *(FString::SanitizeFloat(EngineRpm)));
@@ -55,13 +55,15 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime) {
     DrawDebugLine(GetWorld(), PawnOwner->GetActorLocation(), PawnOwner->GetActorLocation() + Velocity*100.0f, FColor::Red, false, -1.0f, (uint8)'\000', 10.0f);
 }
 
-void UMyVehicleMovement::UpGear() {
+void UMyVehicleMovement::IncreaseGear() {
     if (CurrentGear == GearBox.Num() - 1) return;
+
     ++CurrentGear;
 }
 
-void UMyVehicleMovement::DownGear() {
+void UMyVehicleMovement::DecreaseGear() {
     if (CurrentGear == 0) return;
+
     --CurrentGear;
     EngineRpm = FMath::Min(MaxEngineRpm, EngineRpm); // fixme! velocity should drop
 }
@@ -71,9 +73,23 @@ void UMyVehicleMovement::CalcSteering(float DeltaTime) {
     
 }
 
+void UMyVehicleMovement::AutomaticGearChange() {
+    if (!AutomaticGearMode) return;
+
+    FGearInfo GearInfo = GearBox[CurrentGear];
+    float CurrentRatio = EngineRpm / MaxEngineRpm;
+    if (CurrentRatio > GearInfo.IncreaseAt) {
+        IncreaseGear();
+    }
+    else if (CurrentRatio < GearInfo.DecraseAt) {
+        DecreaseGear();
+    }
+}
+
 void UMyVehicleMovement::ApplyMovement(float DeltaTime) {
     CalcSteering(DeltaTime);
     CalcThrottle(DeltaTime);
+    AutomaticGearChange();
     MoveUpdatedComponent(GetPendingInputVector(), PawnOwner->GetActorRotation(), false);
 }
 
