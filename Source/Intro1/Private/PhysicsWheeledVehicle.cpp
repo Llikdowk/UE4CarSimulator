@@ -32,7 +32,7 @@ void APhysicsWheeledVehicle::Tick( float DeltaTime )
 }
 
 // Called to bind functionality to input
-void APhysicsWheeledVehicle::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void APhysicsWheeledVehicle::SetupPlayerInputComponent(class UInputComponent*)
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 }

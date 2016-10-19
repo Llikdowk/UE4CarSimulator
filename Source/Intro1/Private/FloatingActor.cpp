@@ -7,22 +7,22 @@
 // Sets default values
 AFloatingActor::AFloatingActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    PrimaryActorTick.bCanEverTick = true;
 
 }
 
 // Called when the game starts or when spawned
 void AFloatingActor::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
+
 }
 
 // Called every frame
-void AFloatingActor::Tick( float DeltaTime )
+void AFloatingActor::Tick(float DeltaTime)
 {
-	Super::Tick( DeltaTime );
+    Super::Tick(DeltaTime);
 
     FVector NewLocation = GetActorLocation();
     float DeltaHeight = (FMath::Sin(RunningTime + DeltaTime) - FMath::Sin(RunningTime));
@@ -33,7 +33,8 @@ void AFloatingActor::Tick( float DeltaTime )
     PureBlueprintFunction();
 }
 
-void AFloatingActor::CalculateValues() {
+void AFloatingActor::CalculateValues()
+{
     DamagePerSecond = TotalDamage / DamageTimeInSeconds;
 }
 
@@ -45,13 +46,15 @@ void AFloatingActor::PostInitProperties()
 }
 
 #if WITH_EDITOR
-void AFloatingActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) {
+void AFloatingActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
     CalculateValues();
     Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
 
-void AFloatingActor::PureBlueprintFunction_Implementation() {
+void AFloatingActor::PureBlueprintFunction_Implementation()
+{
 
     //UE_LOG(LogTemp, Warning, TEXT("Hello there! default cpp implementation for PrueBlueprintFunction running"));
 }

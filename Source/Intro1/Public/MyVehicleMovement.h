@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/PawnMovementComponent.h"
+#include "DebugUtils.h"
 #include "MyVehicleMovement.generated.h"
 
 /**
@@ -79,7 +80,7 @@ public:
     TArray<FGearInfo> GearBox;
     UPROPERTY(EditAnywhere)
     float FinalDriveRatio = 3.44f;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere) // Currently useless
     float MaxEngineRpm = 8000;
 
 
@@ -103,3 +104,4 @@ private:
 
     int CurrentGear;
 };
+
