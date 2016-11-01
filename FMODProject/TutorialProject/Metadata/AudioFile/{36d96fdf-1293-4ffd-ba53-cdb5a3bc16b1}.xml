@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.01.08.00">
+    <object class="AudioFile" id="{36d96fdf-1293-4ffd-ba53-cdb5a3bc16b1}">
+        <property name="assetPath">
+            <value>WIND_HOWLING_LOOP01_edited.wav</value>
+        </property>
+        <property name="frequencyInKHz">
+            <value>48</value>
+        </property>
+        <property name="channelCount">
+            <value>2</value>
+        </property>
+        <property name="length">
+            <value>7.4854166666666666</value>
+        </property>
+        <relationship name="masterAssetFolder">
+            <destination>{45a50420-bbfb-4b3f-9993-46091a8b8ee1}</destination>
+        </relationship>
+    </object>
+</objects>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.01.08.00">
+    <object class="AudioFile" id="{40affa38-b488-4d20-b464-a434087580e3}">
+        <property name="assetPath">
+            <value>Heraklios_leather_armour_02.wav</value>
+        </property>
+        <property name="frequencyInKHz">
+            <value>48</value>
+        </property>
+        <property name="channelCount">
+            <value>1</value>
+        </property>
+        <property name="length">
+            <value>0.30104166666666665</value>
+        </property>
+        <relationship name="masterAssetFolder">
+            <destination>{45a50420-bbfb-4b3f-9993-46091a8b8ee1}</destination>
+        </relationship>
+    </object>
+</objects>

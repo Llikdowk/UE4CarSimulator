@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.01.08.00">
+    <object class="AudioFile" id="{683b7690-623a-4507-a003-21081f189412}">
+        <property name="assetPath">
+            <value>Twister_low_03.wav</value>
+        </property>
+        <property name="frequencyInKHz">
+            <value>44.0999985</value>
+        </property>
+        <property name="channelCount">
+            <value>1</value>
+        </property>
+        <property name="length">
+            <value>7.5959183673469388</value>
+        </property>
+        <relationship name="masterAssetFolder">
+            <destination>{45a50420-bbfb-4b3f-9993-46091a8b8ee1}</destination>
+        </relationship>
+    </object>
+</objects>

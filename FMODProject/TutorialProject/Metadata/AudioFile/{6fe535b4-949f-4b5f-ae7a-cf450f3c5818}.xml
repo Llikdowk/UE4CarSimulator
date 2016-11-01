@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.01.08.00">
+    <object class="AudioFile" id="{6fe535b4-949f-4b5f-ae7a-cf450f3c5818}">
+        <property name="assetPath">
+            <value>BIRD_APOSTLE_BIRD_CALL04_STEREO.WAV</value>
+        </property>
+        <property name="frequencyInKHz">
+            <value>48</value>
+        </property>
+        <property name="channelCount">
+            <value>2</value>
+        </property>
+        <property name="length">
+            <value>1.1890833333333333</value>
+        </property>
+        <relationship name="masterAssetFolder">
+            <destination>{45a50420-bbfb-4b3f-9993-46091a8b8ee1}</destination>
+        </relationship>
+    </object>
+</objects>

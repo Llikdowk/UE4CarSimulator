@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.01.08.00">
+    <object class="AudioFile" id="{d6725fda-0583-4a1d-8708-62fd6af09e62}">
+        <property name="assetPath">
+            <value>bajatruck_idle.wav</value>
+        </property>
+        <property name="frequencyInKHz">
+            <value>48</value>
+        </property>
+        <property name="channelCount">
+            <value>1</value>
+        </property>
+        <property name="length">
+            <value>3.1187499999999999</value>
+        </property>
+        <relationship name="masterAssetFolder">
+            <destination>{45a50420-bbfb-4b3f-9993-46091a8b8ee1}</destination>
+        </relationship>
+    </object>
+</objects>

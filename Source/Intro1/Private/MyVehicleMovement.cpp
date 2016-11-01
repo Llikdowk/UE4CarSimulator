@@ -4,14 +4,23 @@
 #include "MyVehicleMovement.h"
 #include "DrawDebugHelpers.h"
 
-
 UMyVehicleMovement::UMyVehicleMovement()
 {
 }
 
+void UMyVehicleMovement::Clutch()
+{
+	bClutch = true;
+}
+
+void UMyVehicleMovement::Declutch()
+{
+	bClutch = false;
+}
+
 void UMyVehicleMovement::SetThrottleInput(float InputValue)
 {
-	this->InputThrottle = InputValue;
+	this->InputThrottle = InputValue * ((InputValue*Brake - InputValue - Brake + 1) / 2.0f + 1);
 }
 
 void UMyVehicleMovement::SetSteeringInput(float InputValue)
@@ -32,24 +41,42 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime)
 
 	FVector TotalForces = FVector::ZeroVector;
 	TotalForces += -AerodynamicDrag * Velocity * Velocity.Size(); // N
-	TotalForces += -RollingResistance * Velocity.GetSafeNormal();
-	if (InputThrottle > 0)
+	TotalForces += -RollingResistance * Velocity;
+	TorqueWheels = TorqueEngine * GearBox[CurrentGear].Ratio * FinalDriveRatio;
+	if (!bClutch)
 	{
-		TorqueWheels = TorqueEngine * GearBox[CurrentGear].Ratio * FinalDriveRatio;
-		float Traction = TorqueWheels / WheelRadius;
-		TotalForces += InputThrottle * ForwardV * Traction;
+		TimeAcceleratorPressedWhileClutching = EngineRpm / 8000.0f; //maxEngineRpm
 	}
 	else
 	{
-		TotalForces += InputThrottle * Brake * ForwardV;
+		if (InputThrottle > 0.0f)
+		{
+			TimeAcceleratorPressedWhileClutching = FMath::Min(TimeAcceleratorPressedWhileClutching + DeltaTime * ClutchTimeDistension, 1.0f);
+		}
+		else
+		{
+			TimeAcceleratorPressedWhileClutching = FMath::Max(TimeAcceleratorPressedWhileClutching - DeltaTime * ClutchTimeDistension, 0.0f);
+		}
+		EngineRpm = EngineRpmCurve->GetFloatValue(TimeAcceleratorPressedWhileClutching);
 	}
 
+	float Traction = TorqueWheels / WheelRadius;
+	TotalForces += InputThrottle * ForwardV * Traction;
+
 	Acceleration = TotalForces / Mass; // m/s^2
-	Velocity = Velocity + Acceleration * DeltaTime; // m/s
+	Velocity = FMath::Lerp(Velocity, Velocity.Size()*ForwardV, 0.05f) + Acceleration * DeltaTime; // m/s
+	//Velocity = EngineRpm*rpm_to_radps*WheelRadius * ForwardV * .1f + Acceleration * DeltaTime;
 
 	WheelsRpm = Velocity.Size() / WheelRadius * radps_to_rpm;
 	TorqueEngine = EngineTorqueCurve->GetFloatValue(EngineRpm);
-	EngineRpm = GearBox[CurrentGear].Ratio * FinalDriveRatio * Velocity.Size() / WheelRadius * radps_to_rpm;
+	
+	
+	if (!bClutch)
+	{
+		EngineRpm = GearBox[CurrentGear].Ratio * FinalDriveRatio * WheelsRpm;
+	}
+	
+	
 
 	FVector Position = PawnOwner->GetActorLocation();
 	FVector NewPosition = Position + Velocity*m_to_cm * DeltaTime;
@@ -62,24 +89,25 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime)
 void UMyVehicleMovement::IncreaseGear()
 {
 	if (CurrentGear == GearBox.Num() - 1) return;
+	if (!bClutch) return;
+	//if (InputThrottle <= 0.0f) return;
 	++CurrentGear;
 }
 
 void UMyVehicleMovement::DecreaseGear()
 {
 	if (CurrentGear == 0) return;
+	if (!bClutch) return;
 	--CurrentGear;
 }
 
 void UMyVehicleMovement::CalcSteering(float DeltaTime)
 {
-	PawnOwner->AddActorLocalRotation(FQuat(FVector::UpVector, InputSteering * SteeringPower * DeltaTime), true);
+	PawnOwner->AddActorLocalRotation(FQuat(FVector::UpVector, InputSteering * SteeringPower / (FMath::Loge(Velocity.Size())) *DeltaTime), true);
 }
 
 void UMyVehicleMovement::AutomaticGearChange()
 {
-	if (!AutomaticGearMode) return;
-
 	FGearInfo GearInfo = GearBox[CurrentGear];
 	float CurrentRatio = EngineRpm / MaxEngineRpm;
 	if (CurrentRatio > GearInfo.IncreaseAt)
@@ -96,7 +124,10 @@ void UMyVehicleMovement::ApplyMovement(float DeltaTime)
 {
 	CalcSteering(DeltaTime);
 	CalcThrottle(DeltaTime);
-	AutomaticGearChange();
+	if (AutomaticGearMode)
+	{
+		AutomaticGearChange();
+	}
 	MoveUpdatedComponent(GetPendingInputVector(), PawnOwner->GetActorRotation(), false);
 }
 
@@ -115,7 +146,10 @@ void UMyVehicleMovement::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
 	YPos += YL;
 	Canvas->DrawText(RenderFont, FString::Printf(TEXT("GEAR: %s"), *(FString::SanitizeFloat(CurrentGear))), 4.0f, YPos, 1.0f, 1.0f, RenderFontConfig);
 	YPos += YL;
-
+	Canvas->DrawText(RenderFont, FString::Printf(TEXT("TorqueWheels: %s Nm"), *(FString::SanitizeFloat(TorqueWheels))), 4.0f, YPos, 1.0f, 1.0f, RenderFontConfig);
+	YPos += YL;
+	Canvas->DrawText(RenderFont, FString::Printf(TEXT("Clutch: %s "), bClutch ? TEXT("true") : TEXT("false")), 4.0f, YPos, 1.0f, 1.0f, RenderFontConfig);
+	YPos += YL;
 
 	const float GraphWidth(100.0f), GraphHeight(100.0f);
 	Canvas->SetDrawColor(FColor(255, 255, 0));

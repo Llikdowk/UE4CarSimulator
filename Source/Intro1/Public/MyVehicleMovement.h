@@ -39,6 +39,10 @@ public:
     void IncreaseGear();
     UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Movement")
     void DecreaseGear();
+	UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Movement")
+	void Clutch();
+	UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Movement")
+	void Declutch();
 
     UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Info")
     float GetRpm() { return EngineRpm; }
@@ -49,30 +53,33 @@ public:
     void ApplyMovement(float DeltaTime);
     void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos);
 
-    /* DEPRECATED */
+	UPROPERTY(EditAnywhere)
     float SteeringPower = 2.0f;
-    /**/
 
     UPROPERTY(EditAnywhere, DisplayName="Mass (kg)")
     float Mass = 1.0f;
 
     // forces (N/m)
-    UPROPERTY(EditAnywhere, DisplayName="Aerodynamic Drag (N)")
+    UPROPERTY(EditAnywhere, DisplayName="Aerodynamic Drag")
     float AerodynamicDrag;
-    UPROPERTY(EditAnywhere, DisplayName="Rolling Resistance (N)")
+    UPROPERTY(EditAnywhere, DisplayName="Rolling Resistance")
     float RollingResistance;
     UPROPERTY(EditAnywhere, DisplayName = "Wheel Radius (m)")
     float WheelRadius = 0.228f;
 
-    UPROPERTY(EditAnywhere, DisplayName="Brake (N)")
+    UPROPERTY(EditAnywhere, DisplayName="Brake")
     float Brake = 1.0;
 
     UPROPERTY(EditAnywhere)
     UCurveFloat* EngineTorqueCurve;
-    //FRuntimeFloatCurve EngineTorqueCurve;
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* EngineRpmCurve;
 
     UPROPERTY(EditAnywhere)
     float CorneringStiffness = 1.0f;
+
+	UPROPERTY(EditAnywhere)
+	float ClutchTimeDistension = 0.75f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool AutomaticGearMode = true;
@@ -103,5 +110,7 @@ private:
     float WheelsRpm = 0.0f;
 
     int CurrentGear;
+	bool bClutch = true;
+	float TimeAcceleratorPressedWhileClutching = 0.0f;
 };
 
