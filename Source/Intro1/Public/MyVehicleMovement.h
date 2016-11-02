@@ -72,8 +72,8 @@ public:
 
     UPROPERTY(EditAnywhere)
     UCurveFloat* EngineTorqueCurve;
-	UPROPERTY(EditAnywhere)
-	UCurveFloat* EngineRpmCurve;
+//	UPROPERTY(EditAnywhere)
+//	UCurveFloat* EngineRpmCurve;
 
     UPROPERTY(EditAnywhere)
     float CorneringStiffness = 1.0f;
@@ -109,8 +109,8 @@ private:
     float EngineRpm = 0.0f;
     float WheelsRpm = 0.0f;
 
-    int CurrentGear;
-	bool bClutch = true;
+    int CurrentGear = 1;
+	bool bClutchPressed = false;
 	float TimeAcceleratorPressedWhileClutching = 0.0f;
 };
 

@@ -10,17 +10,17 @@ UMyVehicleMovement::UMyVehicleMovement()
 
 void UMyVehicleMovement::Clutch()
 {
-	bClutch = true;
+	bClutchPressed = true;
 }
 
 void UMyVehicleMovement::Declutch()
 {
-	bClutch = false;
+	bClutchPressed = false;
 }
 
 void UMyVehicleMovement::SetThrottleInput(float InputValue)
 {
-	this->InputThrottle = InputValue * ((InputValue*Brake - InputValue - Brake + 1) / 2.0f + 1);
+	this->InputThrottle = InputValue; // *((InputValue*Brake - InputValue - Brake + 1) / 2.0f + 1);
 }
 
 void UMyVehicleMovement::SetSteeringInput(float InputValue)
@@ -42,41 +42,58 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime)
 	FVector TotalForces = FVector::ZeroVector;
 	TotalForces += -AerodynamicDrag * Velocity * Velocity.Size(); // N
 	TotalForces += -RollingResistance * Velocity;
-	TorqueWheels = TorqueEngine * GearBox[CurrentGear].Ratio * FinalDriveRatio;
-	if (!bClutch)
+	if (EngineRpm <= MaxEngineRpm)
 	{
-		TimeAcceleratorPressedWhileClutching = EngineRpm / 8000.0f; //maxEngineRpm
+		if (InputThrottle > 0.01f)
+		{
+			TorqueWheels = InputThrottle * TorqueEngine * GearBox[CurrentGear].Ratio * FinalDriveRatio;
+		}
+		else if (InputThrottle < -0.01f)
+		{
+			TorqueWheels = Brake * InputThrottle * TorqueEngine * GearBox[CurrentGear].Ratio * FinalDriveRatio;
+		}
+	}
+	else
+	{
+		TorqueWheels = -TorqueEngine * GearBox[CurrentGear].Ratio * FinalDriveRatio;
+	}
+
+
+	if (!bClutchPressed)
+	{
+		TimeAcceleratorPressedWhileClutching = EngineRpm / (MaxEngineRpm * ClutchTimeDistension);
+
+		float Traction = TorqueWheels / WheelRadius;
+		TotalForces += ForwardV * Traction;
+
+		WheelsRpm = Velocity.Size() / WheelRadius * radps_to_rpm;
+		EngineRpm = FMath::Lerp(GearBox[CurrentGear].Ratio * FinalDriveRatio * WheelsRpm, EngineRpm, 0.975f);
+		TorqueEngine = EngineTorqueCurve->GetFloatValue(EngineRpm);
+		
+		if (EngineRpm < 1000.0f)
+		{
+			//TEMP: should cause engine failure instead! you should be able to start the car at 0rpm
+			TotalForces = FVector::ZeroVector;
+			Velocity = FVector::ZeroVector;
+			TorqueEngine = 0.0f;
+		}
 	}
 	else
 	{
 		if (InputThrottle > 0.0f)
 		{
-			TimeAcceleratorPressedWhileClutching = FMath::Min(TimeAcceleratorPressedWhileClutching + DeltaTime * ClutchTimeDistension, 1.0f);
+			TimeAcceleratorPressedWhileClutching = FMath::Min(TimeAcceleratorPressedWhileClutching + DeltaTime, 1.0f/ClutchTimeDistension);
 		}
 		else
 		{
-			TimeAcceleratorPressedWhileClutching = FMath::Max(TimeAcceleratorPressedWhileClutching - DeltaTime * ClutchTimeDistension, 0.0f);
+			TimeAcceleratorPressedWhileClutching = FMath::Max(TimeAcceleratorPressedWhileClutching - DeltaTime, 0.0f);
 		}
-		EngineRpm = EngineRpmCurve->GetFloatValue(TimeAcceleratorPressedWhileClutching);
+		EngineRpm = TimeAcceleratorPressedWhileClutching * ClutchTimeDistension * MaxEngineRpm;
+		TorqueEngine = 0.0f;
 	}
-
-	float Traction = TorqueWheels / WheelRadius;
-	TotalForces += InputThrottle * ForwardV * Traction;
 
 	Acceleration = TotalForces / Mass; // m/s^2
 	Velocity = FMath::Lerp(Velocity, Velocity.Size()*ForwardV, 0.05f) + Acceleration * DeltaTime; // m/s
-	//Velocity = EngineRpm*rpm_to_radps*WheelRadius * ForwardV * .1f + Acceleration * DeltaTime;
-
-	WheelsRpm = Velocity.Size() / WheelRadius * radps_to_rpm;
-	TorqueEngine = EngineTorqueCurve->GetFloatValue(EngineRpm);
-	
-	
-	if (!bClutch)
-	{
-		EngineRpm = GearBox[CurrentGear].Ratio * FinalDriveRatio * WheelsRpm;
-	}
-	
-	
 
 	FVector Position = PawnOwner->GetActorLocation();
 	FVector NewPosition = Position + Velocity*m_to_cm * DeltaTime;
@@ -89,7 +106,7 @@ void UMyVehicleMovement::CalcThrottle(float DeltaTime)
 void UMyVehicleMovement::IncreaseGear()
 {
 	if (CurrentGear == GearBox.Num() - 1) return;
-	if (!bClutch) return;
+	if (!bClutchPressed) return;
 	//if (InputThrottle <= 0.0f) return;
 	++CurrentGear;
 }
@@ -97,7 +114,7 @@ void UMyVehicleMovement::IncreaseGear()
 void UMyVehicleMovement::DecreaseGear()
 {
 	if (CurrentGear == 0) return;
-	if (!bClutch) return;
+	if (!bClutchPressed) return;
 	--CurrentGear;
 }
 
@@ -148,7 +165,9 @@ void UMyVehicleMovement::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
 	YPos += YL;
 	Canvas->DrawText(RenderFont, FString::Printf(TEXT("TorqueWheels: %s Nm"), *(FString::SanitizeFloat(TorqueWheels))), 4.0f, YPos, 1.0f, 1.0f, RenderFontConfig);
 	YPos += YL;
-	Canvas->DrawText(RenderFont, FString::Printf(TEXT("Clutch: %s "), bClutch ? TEXT("true") : TEXT("false")), 4.0f, YPos, 1.0f, 1.0f, RenderFontConfig);
+	Canvas->DrawText(RenderFont, FString::Printf(TEXT("TorqueEngine: %s Nm"), *(FString::SanitizeFloat(TorqueEngine))), 4.0f, YPos, 1.0f, 1.0f, RenderFontConfig);
+	YPos += YL;
+	Canvas->DrawText(RenderFont, FString::Printf(TEXT("Clutch: %s "), bClutchPressed ? TEXT("true") : TEXT("false")), 4.0f, YPos, 1.0f, 1.0f, RenderFontConfig);
 	YPos += YL;
 
 	const float GraphWidth(100.0f), GraphHeight(100.0f);
