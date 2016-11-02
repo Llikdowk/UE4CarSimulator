@@ -43,6 +43,8 @@ public:
 	void Clutch();
 	UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Movement")
 	void Declutch();
+	UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Movement")
+	float IsOnload();
 
     UFUNCTION(BlueprintCallable, Category = "PhysicsVehicle|Info")
     float GetRpm() { return EngineRpm; }
@@ -87,7 +89,7 @@ public:
     TArray<FGearInfo> GearBox;
     UPROPERTY(EditAnywhere)
     float FinalDriveRatio = 3.44f;
-    UPROPERTY(EditAnywhere) // Currently useless
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) // Currently useless
     float MaxEngineRpm = 8000;
 
 

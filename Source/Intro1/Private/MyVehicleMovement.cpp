@@ -148,6 +148,11 @@ void UMyVehicleMovement::ApplyMovement(float DeltaTime)
 	MoveUpdatedComponent(GetPendingInputVector(), PawnOwner->GetActorRotation(), false);
 }
 
+float UMyVehicleMovement::IsOnload()
+{
+	return bClutchPressed ? -1.0f : 1.0f;
+}
+
 // info: https://github.com/EpicGames/UnrealEngine/blob/c9f4efe690de8b3b72a11223865c623ca0ee7086/Engine/Source/Runtime/Engine/Private/Actor.cpp#L1797
 // info: https://github.com/EpicGames/UnrealEngine/blob/e528f9f7fa161504dd629c3b390deac93650e43a/Engine/Source/Runtime/Engine/Private/Vehicles/WheeledVehicleMovementComponent.cpp#L1294
 void UMyVehicleMovement::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
